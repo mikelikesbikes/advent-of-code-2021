@@ -14,16 +14,7 @@ fn main() {
     println!("{}", pos.x * pos.depth);
 
     let mut pos2 = PositionWithAim { x: 0, depth: 0, aim: 0 };
-    for cmd in input {
-        if cmd.cmd == "forward" {
-            pos2.x += cmd.val;
-            pos2.depth += pos2.aim * cmd.val
-        } else if cmd.cmd == "up" {
-            pos2.aim -= cmd.val;
-        } else if cmd.cmd == "down" {
-            pos2.aim += cmd.val;
-        }
-    }
+    pos2.navigate(input);
     println!("{}", pos2.x * pos2.depth);
 }
 
@@ -34,26 +25,13 @@ struct Command {
 }
 
 trait Nav {
-    fn get_x(&self) -> i32;
-    fn get_depth(&self) -> i32;
-    fn set_x(&mut self, val: i32);
-    fn set_depth(&mut self, val: i32);
-
+    fn step(&mut self, cmd: &Command);
     fn navigate(&mut self, cmds: &Vec<Command>) {
         for cmd in cmds {
             self.step(&cmd);
         }
     }
 
-    fn step(&mut self, cmd: &Command) {
-        if cmd.cmd == "forward" {
-            self.set_x(self.get_x() + cmd.val);
-        } else if cmd.cmd == "up" {
-            self.set_depth(self.get_depth() - cmd.val);
-        } else if cmd.cmd == "down" {
-            self.set_depth(self.get_depth() + cmd.val);
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -63,17 +41,14 @@ struct Position {
 }
 
 impl Nav for Position {
-    fn get_x(&self) -> i32 {
-        self.x
-    }
-    fn get_depth(&self) -> i32 {
-        self.depth
-    }
-    fn set_x(&mut self, val: i32) {
-        self.x = val;
-    }
-    fn set_depth(&mut self, val: i32) {
-        self.depth = val;
+    fn step(&mut self, cmd: &Command) {
+        if cmd.cmd == "forward" {
+            self.x += cmd.val;
+        } else if cmd.cmd == "up" {
+            self.depth -= cmd.val;
+        } else if cmd.cmd == "down" {
+            self.depth += cmd.val;
+        }
     }
 }
 
@@ -82,6 +57,19 @@ struct PositionWithAim {
     x: i32,
     depth: i32,
     aim: i32,
+}
+
+impl Nav for PositionWithAim {
+    fn step(&mut self, cmd: &Command) {
+        if cmd.cmd == "forward" {
+            self.x += cmd.val;
+            self.depth += self.aim * cmd.val;
+        } else if cmd.cmd == "up" {
+            self.aim -= cmd.val
+        } else if cmd.cmd == "down" {
+            self.aim += cmd.val
+        }
+    }
 }
 
 fn read_input(file: File) -> Vec<String> {
