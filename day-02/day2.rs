@@ -2,6 +2,8 @@ use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::BufRead;
+use std::str::FromStr;
+use std::convert::Infallible;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -18,10 +20,42 @@ fn main() {
     println!("{}", pos2.x * pos2.depth);
 }
 
+#[derive(Debug, Clone, Copy)]
+enum CommandType {
+    Forward,
+    Up,
+    Down,
+}
+
+impl FromStr for CommandType {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "forward" => Ok(CommandType::Forward),
+            "up" => Ok(CommandType::Up),
+            "down" => Ok(CommandType::Down),
+            _ => Err(()),
+        }
+    }
+}
+
 #[derive(Debug)]
 struct Command {
-    cmd: String,
+    ctype: CommandType,
     val: i32,
+}
+
+impl FromStr for Command {
+    type Err = Infallible;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+         let splits: Vec<&str> = s.split(' ').collect();
+         Ok(
+             Command {
+                 ctype: splits[0].parse::<CommandType>().unwrap(),
+                 val: splits[1].parse::<i32>().unwrap(),
+             }
+         )
+    }
 }
 
 trait Nav {
@@ -31,7 +65,6 @@ trait Nav {
             self.step(&cmd);
         }
     }
-
 }
 
 #[derive(Debug)]
@@ -42,12 +75,10 @@ struct Position {
 
 impl Nav for Position {
     fn step(&mut self, cmd: &Command) {
-        if cmd.cmd == "forward" {
-            self.x += cmd.val;
-        } else if cmd.cmd == "up" {
-            self.depth -= cmd.val;
-        } else if cmd.cmd == "down" {
-            self.depth += cmd.val;
+        match cmd.ctype {
+            CommandType::Forward => self.x += cmd.val,
+            CommandType::Up => self.depth -= cmd.val,
+            CommandType::Down => self.depth += cmd.val,
         }
     }
 }
@@ -61,13 +92,13 @@ struct PositionWithAim {
 
 impl Nav for PositionWithAim {
     fn step(&mut self, cmd: &Command) {
-        if cmd.cmd == "forward" {
-            self.x += cmd.val;
-            self.depth += self.aim * cmd.val;
-        } else if cmd.cmd == "up" {
-            self.aim -= cmd.val
-        } else if cmd.cmd == "down" {
-            self.aim += cmd.val
+        match cmd.ctype {
+            CommandType::Forward => {
+                self.x += cmd.val;
+                self.depth += self.aim * cmd.val;
+            },
+            CommandType::Up => self.aim -= cmd.val,
+            CommandType::Down => self.aim += cmd.val,
         }
     }
 }
@@ -79,10 +110,6 @@ fn read_input(file: File) -> Vec<String> {
 
 fn parse_input(input: Vec<String>) -> Vec<Command> {
     input.iter().map(|l| {
-         let splits: Vec<&str> = l.split(' ').collect();
-         Command {
-             cmd: splits[0].to_string(),
-             val: splits[1].parse::<i32>().unwrap(),
-         }
+        l.parse::<Command>().unwrap()
     }).collect()
 }
