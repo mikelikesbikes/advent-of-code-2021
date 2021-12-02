@@ -33,13 +33,12 @@ struct Command {
     val: i32,
 }
 
-#[derive(Debug)]
-struct Position {
-    x: i32,
-    depth: i32,
-}
+trait Nav {
+    fn get_x(&self) -> i32;
+    fn get_depth(&self) -> i32;
+    fn set_x(&mut self, val: i32);
+    fn set_depth(&mut self, val: i32);
 
-impl Position {
     fn navigate(&mut self, cmds: &Vec<Command>) {
         for cmd in cmds {
             self.step(&cmd);
@@ -48,12 +47,33 @@ impl Position {
 
     fn step(&mut self, cmd: &Command) {
         if cmd.cmd == "forward" {
-            self.x += cmd.val;
+            self.set_x(self.get_x() + cmd.val);
         } else if cmd.cmd == "up" {
-            self.depth -= cmd.val;
+            self.set_depth(self.get_depth() - cmd.val);
         } else if cmd.cmd == "down" {
-            self.depth += cmd.val;
+            self.set_depth(self.get_depth() + cmd.val);
         }
+    }
+}
+
+#[derive(Debug)]
+struct Position {
+    x: i32,
+    depth: i32,
+}
+
+impl Nav for Position {
+    fn get_x(&self) -> i32 {
+        self.x
+    }
+    fn get_depth(&self) -> i32 {
+        self.depth
+    }
+    fn set_x(&mut self, val: i32) {
+        self.x = val;
+    }
+    fn set_depth(&mut self, val: i32) {
+        self.depth = val;
     }
 }
 
