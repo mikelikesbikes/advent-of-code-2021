@@ -3,7 +3,6 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::BufRead;
 use std::str::FromStr;
-use std::convert::Infallible;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -24,40 +23,23 @@ fn main() {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum CommandType {
-    Forward,
-    Up,
-    Down,
-}
-
-impl FromStr for CommandType {
-    type Err = ();
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "forward" => Ok(CommandType::Forward),
-            "up" => Ok(CommandType::Up),
-            "down" => Ok(CommandType::Down),
-            _ => Err(()),
-        }
-    }
-}
-
-#[derive(Debug)]
-struct Command {
-    ctype: CommandType,
-    val: i32,
+enum Command {
+    Forward { val: i32 },
+    Up { val: i32 },
+    Down { val: i32 },
 }
 
 impl FromStr for Command {
-    type Err = Infallible;
+    type Err = ();
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-         let splits: Vec<&str> = s.split(' ').collect();
-         Ok(
-             Command {
-                 ctype: splits[0].parse::<CommandType>().unwrap(),
-                 val: splits[1].parse::<i32>().unwrap(),
-             }
-         )
+        let splits: Vec<&str> = s.split(' ').collect();
+        let val = splits[1].parse::<i32>().unwrap();
+        match splits[0] {
+            "forward" => Ok(Command::Forward { val: val }),
+            "up" => Ok(Command::Up { val: val }),
+            "down" => Ok(Command::Down { val: val }),
+            _ => Err(()),
+        }
     }
 }
 
@@ -68,8 +50,12 @@ mod command_tests {
     #[test]
     fn parses_type_and_val() {
         let command = "forward 5".parse::<Command>().unwrap();
-        assert_eq!(command.ctype, CommandType::Forward);
-        assert_eq!(command.val, 5);
+        match command {
+            Command::Forward { val } => {
+                assert_eq!(val, 5)
+            },
+            _ => panic!("wrong command type"),
+        }
     }
 }
 
@@ -90,10 +76,10 @@ struct Position {
 
 impl Nav for Position {
     fn step(&mut self, cmd: &Command) {
-        match cmd.ctype {
-            CommandType::Forward => self.x += cmd.val,
-            CommandType::Up => self.depth -= cmd.val,
-            CommandType::Down => self.depth += cmd.val,
+        match cmd {
+            Command::Forward { val } => { self.x += val },
+            Command::Up { val } => { self.depth -= val },
+            Command::Down { val } => { self.depth += val },
         }
     }
 }
@@ -107,13 +93,13 @@ struct PositionWithAim {
 
 impl Nav for PositionWithAim {
     fn step(&mut self, cmd: &Command) {
-        match cmd.ctype {
-            CommandType::Forward => {
-                self.x += cmd.val;
-                self.depth += self.aim * cmd.val;
+        match cmd {
+            Command::Forward { val } => {
+                self.x += val;
+                self.depth += self.aim * val;
             },
-            CommandType::Up => self.aim -= cmd.val,
-            CommandType::Down => self.aim += cmd.val,
+            Command::Up { val } => { self.aim -= val },
+            Command::Down { val } => { self.aim += val },
         }
     }
 }
