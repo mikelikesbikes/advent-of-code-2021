@@ -10,15 +10,7 @@ fn main() {
     let input = &parse_input(read_input(file));
 
     let mut pos = Position { x: 0, depth: 0 };
-    for cmd in input {
-        if cmd.cmd == "forward" {
-            pos.x += cmd.val;
-        } else if cmd.cmd == "up" {
-            pos.depth -= cmd.val;
-        } else if cmd.cmd == "down" {
-            pos.depth += cmd.val;
-        }
-    }
+    pos.navigate(input);
     println!("{}", pos.x * pos.depth);
 
     let mut pos2 = PositionWithAim { x: 0, depth: 0, aim: 0 };
@@ -45,6 +37,24 @@ struct Command {
 struct Position {
     x: i32,
     depth: i32,
+}
+
+impl Position {
+    fn navigate(&mut self, cmds: &Vec<Command>) {
+        for cmd in cmds {
+            self.step(&cmd);
+        }
+    }
+
+    fn step(&mut self, cmd: &Command) {
+        if cmd.cmd == "forward" {
+            self.x += cmd.val;
+        } else if cmd.cmd == "up" {
+            self.depth -= cmd.val;
+        } else if cmd.cmd == "down" {
+            self.depth += cmd.val;
+        }
+    }
 }
 
 #[derive(Debug)]
