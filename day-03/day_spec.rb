@@ -24,13 +24,18 @@ describe "day" do
   end
 
   it "should ..." do
-    expect(grate(input) * erate(input)).to eq 198
-    expect(grate(actual_input) * erate(actual_input)).to eq 2583164
+    reporter = DiagnosticReporter.new(input)
+    expect(reporter.gamma_rate * reporter.epsilon_rate).to eq 198
+
+    reporter = DiagnosticReporter.new(actual_input)
+    expect(reporter.gamma_rate * reporter.epsilon_rate).to eq 2583164
   end
 
   it "should calculate oxygen generator rating and co2 scrubber rating" do
-    expect(orate(input)).to eq 23
-    expect(co2srate(input)).to eq 10
-    expect(orate(actual_input) * co2srate(actual_input)).to eq 2784375
+    reporter = DiagnosticReporter.new(input)
+    expect(reporter.oxygen_generator_rating * reporter.co2_scrubber_rating).to eq 230
+
+    reporter = DiagnosticReporter.new(actual_input)
+    expect(reporter.oxygen_generator_rating * reporter.co2_scrubber_rating).to eq 2784375
   end
 end

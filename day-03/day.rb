@@ -8,64 +8,75 @@ def read_input(filename = "input.txt")
 end
 
 def parse_input(input)
-  input.split("\n").map do |line|
-    line.to_i(2)
-  end
+  input.split("\n")
 end
 
 ### CODE HERE ###
+class DiagnosticReporter
+  attr_reader :readings, :width
 
-def count_ones_and_zeros(readings, n)
-  tally = readings.map { |r| (r >> n) & 1 }.tally
-  [tally[0] || 0, tally[1] || 0]
-end
-
-def nth_bit_eq?(reading, n, x)
-  (reading >> n) & 1 == x
-end
-
-def grate(input)
-  width = input.max.to_s(2).length
-  (1..width).reduce(0) do |gamma, n|
-    zeros, ones = count_ones_and_zeros(input, width - n)
-    ones >= zeros ? (gamma << 1) | 1 : gamma << 1
+  def initialize(readings)
+    @width = readings.first.length
+    @readings = readings.map { |s| s.to_i(2) }
   end
-end
 
-def erate(input)
-  width = input.max.to_s(2).length
-  (1..width).reduce(0) do |gamma, n|
-    zeros, ones = count_ones_and_zeros(input, width - n)
-    zeros >= ones ? (gamma << 1) | 1 : gamma << 1
-  end
-end
-
-def orate(input)
-  width = input.max.to_s(2).length
-  (1..width).each_with_object(input.dup) do |n, readings|
-    zeros, ones = count_ones_and_zeros(readings, width - n)
-    readings.select! do |reading|
-      nth_bit_eq?(reading, width - n, ones >= zeros ? 1 : 0)
+  def gamma_rate
+    bit_positions.reduce(0) do |gamma, n|
+      zeros, ones = count_ones_and_zeros(readings, n)
+      unshift_bit(gamma, ones >= zeros ? 1 : 0)
     end
-    return readings.first if readings.length == 1
+  end
+
+  def epsilon_rate
+    bit_positions.reduce(0) do |epsilon, n|
+      zeros, ones = count_ones_and_zeros(readings, n)
+      unshift_bit(epsilon, zeros >= ones ? 1 : 0)
+    end
+  end
+
+  def oxygen_generator_rating
+    bit_positions.reduce(readings.dup) do |readings, n|
+      zeros, ones = count_ones_and_zeros(readings, n)
+      readings
+        .select { |reading| nth_bit_eq?(reading, n, ones >= zeros ? 1 : 0) }
+        .tap { |readings| return readings.first if readings.length == 1 }
+    end
+  end
+
+  def co2_scrubber_rating
+    bit_positions.reduce(readings.dup) do |readings, n|
+      zeros, ones = count_ones_and_zeros(readings, n)
+      readings
+        .select { |reading| nth_bit_eq?(reading, n, ones < zeros ? 1 : 0) }
+        .tap { |readings| return readings.first if readings.length == 1 }
+    end
+  end
+
+  private
+
+  def bit_positions
+    [*0...width].reverse.freeze
+  end
+
+  def count_ones_and_zeros(readings, n)
+    readings.each_with_object([0, 0]) { |r, tally| tally[(r >> n) & 1] += 1 }
+  end
+
+  def nth_bit_eq?(reading, n, x)
+    (reading >> n) & 1 == x
+  end
+
+  def unshift_bit(x, b)
+    (x << 1) | b
   end
 end
 
-def co2srate(input)
-  width = input.max.to_s(2).length
-  (1..width).each_with_object(input.dup) do |n, readings|
-    zeros, ones = count_ones_and_zeros(readings, width - n)
-    readings.select! do |reading|
-      nth_bit_eq?(reading, width - n, ones < zeros ? 1 : 0)
-    end
-    return readings.first if readings.length == 1
-  end
-end
 
 return unless $PROGRAM_NAME == __FILE__ || $PROGRAM_NAME.end_with?("ruby-memory-profiler")
 
 input = parse_input(read_input)
 
 ### RUN STUFF HERE ###
-puts grate(input) * erate(input)
-puts orate(input) * co2srate(input)
+reporter = DiagnosticReporter.new(input)
+puts reporter.gamma_rate * reporter.epsilon_rate
+puts reporter.oxygen_generator_rating * reporter.co2_scrubber_rating
