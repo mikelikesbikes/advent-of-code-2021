@@ -35,7 +35,7 @@ class DiagnosticReporter
   end
 
   def oxygen_generator_rating
-    bit_positions.reduce(readings.dup) do |readings, n|
+    bit_positions.reduce(readings) do |readings, n|
       zeros, ones = count_ones_and_zeros(readings, n)
       readings
         .select { |reading| nth_bit_eq?(reading, n, ones >= zeros ? 1 : 0) }
@@ -44,7 +44,7 @@ class DiagnosticReporter
   end
 
   def co2_scrubber_rating
-    bit_positions.reduce(readings.dup) do |readings, n|
+    bit_positions.reduce(readings) do |readings, n|
       zeros, ones = count_ones_and_zeros(readings, n)
       readings
         .select { |reading| nth_bit_eq?(reading, n, ones < zeros ? 1 : 0) }
