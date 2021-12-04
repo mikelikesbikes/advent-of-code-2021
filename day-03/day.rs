@@ -14,9 +14,9 @@ fn main() {
     let file = File::open(filename).expect("input file to be found");
     let input = &parse_input(read_input(file));
 
-    println!("input length: {}", input.len());
-    println!("{}", "part1");
-    println!("{}", "part2");
+    println!("input length: {}", input.readings.len());
+    println!("{}", input.gamma_rate() * input.epsilon_rate());
+    println!("{}", input.oxygen_generator_rating() * input.co2_scrubber_rating());
 }
 
 fn read_input(file: File) -> Vec<String> {
@@ -24,24 +24,154 @@ fn read_input(file: File) -> Vec<String> {
     reader.lines().map(|l| l.unwrap()).collect()
 }
 
-fn parse_input(input: Vec<String>) -> Vec<String> {
-    input.iter().map(|l| {
-        // replace 'String' with the type we're trying to parse
-        l.parse::<String>().unwrap()
-    }).collect()
+fn parse_input(input: Vec<String>) -> Readings {
+    Readings { readings: input }
+}
+
+struct Readings {
+    readings: Vec<String>
+}
+
+impl Readings {
+    pub fn gamma_rate(&self) -> usize {
+        let width = self.readings[0].len();
+        let mut gamma = 0;
+        for i in 0..width {
+            match count_ones_and_zeros(&self.readings, i) {
+                (zeros, ones) => {
+                    gamma = gamma << 1;
+                    if ones >= zeros {
+                        gamma |= 1;
+                    }
+                },
+            }
+        }
+        gamma
+    }
+
+    pub fn epsilon_rate(&self) -> usize {
+        let width = self.readings[0].len();
+        let mut epsilon = 0;
+        for i in 0..width {
+            match count_ones_and_zeros(&self.readings, i) {
+                (zeros, ones) => {
+                    epsilon = epsilon << 1;
+                    if ones < zeros {
+                        epsilon |= 1;
+                    }
+                },
+            }
+        }
+        epsilon
+    }
+
+    pub fn oxygen_generator_rating(&self) -> usize {
+        let width = self.readings[0].len();
+        let mut readings = self.readings.clone();
+        for i in 0..width {
+            match count_ones_and_zeros(&readings, i) {
+                (zeros, ones) => {
+                    readings = readings
+                        .into_iter()
+                        .filter(|reading| {
+                            match bit_at(reading, i) {
+                                0 => {
+                                    if zeros > ones {
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                },
+                                1 => {
+                                    if ones >= zeros {
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                },
+                                _ => panic!("wtf"),
+                            }
+                        })
+                        .collect();
+                    if readings.len() == 1 {
+                        return usize::from_str_radix(&readings[0], 2).unwrap();
+                    }
+                },
+            }
+        }
+        0
+    }
+
+    pub fn co2_scrubber_rating(&self) -> usize {
+        let width = self.readings[0].len();
+        let mut readings = self.readings.clone();
+        for i in 0..width {
+            match count_ones_and_zeros(&readings, i) {
+                (zeros, ones) => {
+                    readings = readings
+                        .into_iter()
+                        .filter(|reading| {
+                            match bit_at(reading, i) {
+                                0 => {
+                                    if zeros <= ones {
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                },
+                                1 => {
+                                    if ones < zeros {
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                },
+                                _ => panic!("wtf"),
+                            }
+                        })
+                        .collect();
+                    if readings.len() == 1 {
+                        return usize::from_str_radix(&readings[0], 2).unwrap();
+                    }
+                },
+            }
+        }
+        0
+    }
+}
+
+fn bits_at(readings: &Vec<String>, col: usize) -> Vec<u8> {
+    readings.iter().map(|s| bit_at(s, col) ).collect()
+}
+
+fn count_ones_and_zeros(readings: &Vec<String>, col: usize) -> (usize, usize) {
+    let mut zeros = 0;
+    let mut ones = 0;
+    for bit in bits_at(readings, col) {
+        if bit == 0 {
+            zeros += 1;
+        } else {
+            ones += 1;
+        }
+    }
+    (zeros, ones)
+}
+
+fn bit_at(s: &String, col: usize) -> u8 {
+    s.as_bytes()[col] - 48
 }
 
 #[cfg(test)]
 mod aoc_tests {
     use super::*;
 
-    fn test_input() -> Vec<String> {
+    fn test_input() -> Readings {
         let filename = "test.txt";
         let file = File::open(filename).expect("input file to be found");
         parse_input(read_input(file))
     }
 
-    fn actual_input() -> Vec<String> {
+    fn actual_input() -> Readings {
         let filename = "input.txt";
         let file = File::open(filename).expect("input file to be found");
         parse_input(read_input(file))
@@ -49,13 +179,16 @@ mod aoc_tests {
 
     #[test]
     fn test_part1() {
-        assert!(test_input().len() > 0);
-        assert!(actual_input().len() > 0);
-        assert_eq!(true, true);
+        assert_eq!(test_input().gamma_rate(), 22);
+        assert_eq!(test_input().epsilon_rate(), 9);
+        assert_eq!(test_input().gamma_rate() * test_input().epsilon_rate(), 198);
+        assert_eq!(actual_input().gamma_rate() * actual_input().epsilon_rate(), 2583164);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(true, true);
+        assert_eq!(test_input().oxygen_generator_rating(), 23);
+        assert_eq!(test_input().co2_scrubber_rating(), 10);
+        assert_eq!(actual_input().oxygen_generator_rating() * actual_input().co2_scrubber_rating(), 2784375);
     }
 }
