@@ -37,13 +37,10 @@ impl Readings {
         let width = self.readings[0].len();
         let mut gamma = 0;
         for i in 0..width {
-            match count_ones_and_zeros(&self.readings, i) {
-                (zeros, ones) => {
-                    gamma = gamma << 1;
-                    if ones >= zeros {
-                        gamma |= 1;
-                    }
-                },
+            let (zeros, ones) = count_ones_and_zeros(&self.readings, i);
+            gamma = gamma << 1;
+            if ones >= zeros {
+                gamma |= 1;
             }
         }
         gamma
@@ -53,13 +50,10 @@ impl Readings {
         let width = self.readings[0].len();
         let mut epsilon = 0;
         for i in 0..width {
-            match count_ones_and_zeros(&self.readings, i) {
-                (zeros, ones) => {
-                    epsilon = epsilon << 1;
-                    if ones < zeros {
-                        epsilon |= 1;
-                    }
-                },
+            let (zeros, ones) = count_ones_and_zeros(&self.readings, i);
+            epsilon = epsilon << 1;
+            if ones < zeros {
+                epsilon |= 1;
             }
         }
         epsilon
@@ -69,34 +63,19 @@ impl Readings {
         let width = self.readings[0].len();
         let mut readings = self.readings.clone();
         for i in 0..width {
-            match count_ones_and_zeros(&readings, i) {
-                (zeros, ones) => {
-                    readings = readings
-                        .into_iter()
-                        .filter(|reading| {
-                            match bit_at(reading, i) {
-                                0 => {
-                                    if zeros > ones {
-                                        true
-                                    } else {
-                                        false
-                                    }
-                                },
-                                1 => {
-                                    if ones >= zeros {
-                                        true
-                                    } else {
-                                        false
-                                    }
-                                },
-                                _ => panic!("wtf"),
-                            }
-                        })
-                        .collect();
-                    if readings.len() == 1 {
-                        return usize::from_str_radix(&readings[0], 2).unwrap();
+            let (zeros, ones) = count_ones_and_zeros(&readings, i);
+            readings = readings
+                .into_iter()
+                .filter(|reading| {
+                    match bit_at(reading, i) {
+                        0 => zeros > ones,
+                        1 => ones >= zeros,
+                        _ => panic!("wtf"),
                     }
-                },
+                })
+                .collect();
+            if readings.len() == 1 {
+                return usize::from_str_radix(&readings[0], 2).unwrap();
             }
         }
         0
@@ -106,34 +85,19 @@ impl Readings {
         let width = self.readings[0].len();
         let mut readings = self.readings.clone();
         for i in 0..width {
-            match count_ones_and_zeros(&readings, i) {
-                (zeros, ones) => {
-                    readings = readings
-                        .into_iter()
-                        .filter(|reading| {
-                            match bit_at(reading, i) {
-                                0 => {
-                                    if zeros <= ones {
-                                        true
-                                    } else {
-                                        false
-                                    }
-                                },
-                                1 => {
-                                    if ones < zeros {
-                                        true
-                                    } else {
-                                        false
-                                    }
-                                },
-                                _ => panic!("wtf"),
-                            }
-                        })
-                        .collect();
-                    if readings.len() == 1 {
-                        return usize::from_str_radix(&readings[0], 2).unwrap();
+            let (zeros, ones) = count_ones_and_zeros(&readings, i);
+            readings = readings
+                .into_iter()
+                .filter(|reading| {
+                    match bit_at(reading, i) {
+                        0 => zeros <= ones,
+                        1 => ones < zeros,
+                        _ => panic!("wtf"),
                     }
-                },
+                })
+                .collect();
+            if readings.len() == 1 {
+                return usize::from_str_radix(&readings[0], 2).unwrap();
             }
         }
         0
