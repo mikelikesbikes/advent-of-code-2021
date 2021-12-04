@@ -51,7 +51,7 @@ class BingoAnalyzer
         board.mark(n)
       end
 
-      if boards.all? { |b| b.winner? }
+      if worst_boards.all? { |b| b.winner? }
         worst_board = worst_boards.min_by { |b| b.winning_score }
         return worst_board.winning_score * n
       end
@@ -74,8 +74,9 @@ class BingoBoard
   end
 
   def mark(x)
-    index = squares.index(x)
-    marks << index if index
+    if index = squares.index(x)
+      marks << index
+    end
   end
 
   def winner?
