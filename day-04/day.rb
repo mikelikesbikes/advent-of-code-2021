@@ -8,20 +8,25 @@ def read_input(filename = "input.txt")
 end
 
 def parse_input(input)
-  input = input.split("\n")
-  numbers = input.shift.split(",").map(&:to_i)
-
-  boards = []
-  while input.length > 0
-    input.shift
-    boards << Board.from(input.shift(5))
-  end
-
-  BingoAnalyzer.new(numbers, boards)
+  BingoAnalyzer.from(input)
 end
 
 class BingoAnalyzer
   attr_reader :numbers, :boards
+
+  def self.from(str)
+    lines = str.split("\n")
+    numbers = lines.shift.split(",").map(&:to_i)
+
+    boards = []
+    while lines.length > 0
+      lines.shift
+      boards << BingoBoard.from(lines.shift(5))
+    end
+
+    new(numbers, boards)
+  end
+
   def initialize(numbers, boards)
     @numbers = numbers
     @boards = boards
@@ -56,7 +61,7 @@ class BingoAnalyzer
   end
 end
 
-class Board
+class BingoBoard
   def self.from(strs)
     new(strs.flat_map { |s| s.strip.split(/\s+/).map(&:to_i) })
   end
@@ -104,8 +109,8 @@ end
 
 return unless $PROGRAM_NAME == __FILE__ || $PROGRAM_NAME.end_with?("ruby-memory-profiler")
 
-input = parse_input(read_input)
-
 ### RUN STUFF HERE ###
-puts input.ideal_score
-puts input.worst_score
+analyzer = BingoAnalyzer.from(read_input)
+
+puts analyzer.ideal_score
+puts analyzer.worst_score
