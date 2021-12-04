@@ -11,12 +11,18 @@ describe "day" do
   end
 
   it "should ..." do
-    bingo_analyzer = BingoAnalyzer.from(input)
-    expect(bingo_analyzer.ideal_score).to eq 4512
+    analyzer = BingoAnalyzer.from(input)
+    expect(analyzer.best_score).to eq 4512
+
+    analyzer = BingoAnalyzer.from(actual_input)
+    expect(analyzer.best_score).to eq 58374
   end
 
   it "should find the worst board" do
-    bingo_analyzer = BingoAnalyzer.from(input)
-    expect(bingo_analyzer.worst_score).to eq 1924
+    analyzer = BingoAnalyzer.from(input)
+    expect(analyzer.worst_score).to eq 1924
+
+    analyzer = BingoAnalyzer.from(actual_input)
+    expect(analyzer.worst_score).to eq 11377
   end
 end

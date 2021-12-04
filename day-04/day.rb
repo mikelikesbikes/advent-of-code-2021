@@ -32,7 +32,7 @@ class BingoAnalyzer
     @boards = boards
   end
 
-  def ideal_score
+  def best_score
     numbers.each do |n|
       boards.each do |board|
         board.mark(n)
@@ -113,5 +113,5 @@ return unless $PROGRAM_NAME == __FILE__ || $PROGRAM_NAME.end_with?("ruby-memory-
 ### RUN STUFF HERE ###
 analyzer = BingoAnalyzer.from(read_input)
 
-puts analyzer.ideal_score
+puts analyzer.best_score
 puts analyzer.worst_score
