@@ -98,7 +98,7 @@ class BingoBoard
   def winning_score
     return nil if marks.length < 5
 
-    scoring_line = SCORING_LINES.find { |score_line| (marks & score_line).length == score_line.length }
+    scoring_line = SCORING_LINES.find { |line| (line & marks) == line }
     return nil unless scoring_line
 
     (INDICIES - marks).sum { |i| squares[i] }
