@@ -34,9 +34,8 @@ struct Readings {
 
 impl Readings {
     pub fn gamma_rate(&self) -> usize {
-        let width = self.readings[0].len();
         let mut gamma = 0;
-        for i in 0..width {
+        for i in 0..self.width() {
             let (zeros, ones) = count_ones_and_zeros(&self.readings, i);
             gamma = gamma << 1;
             if ones >= zeros {
@@ -47,9 +46,8 @@ impl Readings {
     }
 
     pub fn epsilon_rate(&self) -> usize {
-        let width = self.readings[0].len();
         let mut epsilon = 0;
-        for i in 0..width {
+        for i in 0..self.width() {
             let (zeros, ones) = count_ones_and_zeros(&self.readings, i);
             epsilon = epsilon << 1;
             if ones < zeros {
@@ -60,9 +58,8 @@ impl Readings {
     }
 
     pub fn oxygen_generator_rating(&self) -> usize {
-        let width = self.readings[0].len();
         let mut readings = self.readings.clone();
-        for i in 0..width {
+        for i in 0..self.width() {
             let (zeros, ones) = count_ones_and_zeros(&readings, i);
             readings = readings
                 .into_iter()
@@ -82,9 +79,8 @@ impl Readings {
     }
 
     pub fn co2_scrubber_rating(&self) -> usize {
-        let width = self.readings[0].len();
         let mut readings = self.readings.clone();
-        for i in 0..width {
+        for i in 0..self.width() {
             let (zeros, ones) = count_ones_and_zeros(&readings, i);
             readings = readings
                 .into_iter()
@@ -101,6 +97,10 @@ impl Readings {
             }
         }
         0
+    }
+
+    fn width(&self) -> usize {
+        self.readings[0].len()
     }
 }
 
