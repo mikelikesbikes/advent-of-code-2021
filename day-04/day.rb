@@ -33,26 +33,25 @@ class BingoAnalyzer
         board.mark(n)
       end
 
-      if board = boards.find { |b| b.winner? }
+      if board = boards.select { |b| b.winner? }.max_by { |b| b.winning_score }
         return board.winning_score * n
       end
     end
   end
 
   def worst_score
-    worst_board = nil
+    worst_boards = boards.dup
     numbers.each do |n|
-      boards.each do |board|
+      worst_boards.each do |board|
         board.mark(n)
       end
 
-      if boards.count { |b| !b.winner? } == 1
-        worst_board = boards.find { |b| !b.winner? }
-      end
-
       if boards.all? { |b| b.winner? }
+        worst_board = worst_boards.min_by { |b| b.winning_score }
         return worst_board.winning_score * n
       end
+
+      worst_boards.reject! { |b| b.winner? }
     end
   end
 end
@@ -75,27 +74,31 @@ class Board
   end
 
   def winner?
-    winning_score
+    !!winning_score
   end
 
   SCORING_LINES = [
-      [*0..4], [*5..9], [*10..14], [*15..19], [*20..24],
-      [0, 5, 10, 15, 20],
-      [1, 6, 11, 16, 21],
-      [2, 7, 12, 17, 22],
-      [3, 8, 13, 18, 23],
-      [4, 9, 14, 19, 24],
-    ]
+    [ 0,  1,  2,  3,  4],
+    [ 5,  6,  7,  8,  9],
+    [10, 11, 12, 13, 14],
+    [15, 16, 17, 18, 19],
+    [20, 21, 22, 23, 24],
+    [ 0,  5, 10, 15, 20],
+    [ 1,  6, 11, 16, 21],
+    [ 2,  7, 12, 17, 22],
+    [ 3,  8, 13, 18, 23],
+    [ 4,  9, 14, 19, 24],
+  ].freeze
+  INDICIES = [*0..24].freeze
   def winning_score
-    return nil unless marks.length >= 5
+    return nil if marks.length < 5
 
     scoring_line = SCORING_LINES.find { |score_line| (marks & score_line).length == score_line.length }
     return nil unless scoring_line
 
-    ([*0..24] - marks).map { |i| squares[i] }.sum
+    (INDICIES - marks).sum { |i| squares[i] }
   end
 end
-
 
 ### CODE HERE ###
 
@@ -104,6 +107,5 @@ return unless $PROGRAM_NAME == __FILE__ || $PROGRAM_NAME.end_with?("ruby-memory-
 input = parse_input(read_input)
 
 ### RUN STUFF HERE ###
-p input
 puts input.ideal_score
 puts input.worst_score
