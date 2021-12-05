@@ -46,11 +46,13 @@ Line = Struct.new(:startpoint, :endpoint) do
 
   def points
     Enumerator.new do |y|
+      dx = endpoint.x <=> startpoint.x
+      dy = endpoint.y <=> startpoint.y
       p = startpoint
       loop do
         y << p
         break if p == endpoint
-        p = Point.new(p.x + (endpoint.x <=> p.x), p.y + (endpoint.y <=> p.y))
+        p = Point.new(p.x + dx, p.y + dy)
       end
     end
   end
