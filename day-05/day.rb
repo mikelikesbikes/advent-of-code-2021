@@ -15,70 +15,48 @@ end
 
 
 ### CODE HERE ###
-class VentAnalyzer
-  attr_reader :lines
-
+VentAnalyzer = Struct.new(:lines) do
   def self.from(str)
-    lines = str.split("\n")
-    new(lines.map { |l| Line.from(l) })
-  end
-
-  def initialize(lines)
-    @lines = lines
+    new(str.split("\n").map { |l| Line.from(l) })
   end
 
   def danger_count(include_diagonals: false)
-    lines.each_with_object(Hash.new(0)) do |line, map|
-      next unless include_diagonals || line.horizontal? || line.vertical?
-      line.points.each do |p|
-        map[p] += 1
-      end
-    end.count { |_, v| v > 1 }
+    lines
+      .select { |line| include_diagonals || !line.diagonal? }
+      .flat_map { |line| line.points.to_a }
+      .tally
+      .count { |_, v| v > 1 }
   end
 end
 
 Point = Struct.new(:x, :y) do
-  def plus(dx, dy)
-    Point.new(self.x + dx, self.y + dy)
+  def self.from(str)
+    new(*str.split(",").map(&:to_i))
   end
 end
 
-class Line
-  attr_reader :startpoint, :endpoint
-
+Line = Struct.new(:startpoint, :endpoint) do
   def self.from(str)
-    startp, endp = str.split(" -> ")
-    startpoint = Point.new(*startp.split(",").map(&:to_i))
-    endpoint = Point.new(*endp.split(",").map(&:to_i))
-    new(startpoint, endpoint)
+    new(*str.split(" -> ").map { |s| Point.from(s) })
   end
 
-  def initialize(startpoint, endpoint)
-    @startpoint = startpoint
-    @endpoint = endpoint
-  end
-
-  def horizontal?
-    startpoint.y == endpoint.y
-  end
-
-  def vertical?
-    startpoint.x == endpoint.x
+  def diagonal?
+    startpoint.x != endpoint.x && startpoint.y != endpoint.y
   end
 
   def points
-    dx = endpoint.x <=> startpoint.x
-    dy = endpoint.y <=> startpoint.y
-    points = [startpoint]
-    while points.last != endpoint
-      points << points.last.plus(dx, dy)
+    Enumerator.new do |y|
+      p = startpoint
+      loop do
+        y << p
+        break if p == endpoint
+        p = Point.new(p.x + (endpoint.x <=> p.x), p.y + (endpoint.y <=> p.y))
+      end
     end
-    points
   end
 end
 
 return unless $PROGRAM_NAME == __FILE__ || $PROGRAM_NAME.end_with?("ruby-memory-profiler")
-
 
 ### RUN STUFF HERE ###
 analyzer = VentAnalyzer.from(read_input)
