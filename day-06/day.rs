@@ -15,29 +15,29 @@ fn main() {
     let file = File::open(filename).expect("input file to be found");
     let input = &parse_input(read_input(file));
 
-    println!("{:?}", &input);
     println!("{}", evolve(input, 80));
     println!("{}", evolve(input, 256));
 }
 
 fn evolve(counts: &HashMap<usize, usize>, count: usize) -> usize {
-    let mut c = counts.clone();
-    for _ in 0..count {
-        let mut new_counts = HashMap::new();
-        for k in c {
-            match k {
-                (0, v) => {
-                    *new_counts.entry(8).or_insert(0) += v;
-                    *new_counts.entry(6).or_insert(0) += v;
-                },
-                (k, v) => {
-                    *new_counts.entry(k - 1).or_insert(0) += v;
-                },
+    match count {
+        0 => counts.values().sum(),
+        _ => {
+            let mut new_counts = HashMap::new();
+            for k in counts {
+                match k {
+                    (0, v) => {
+                        *new_counts.entry(8).or_insert(0) += v;
+                        *new_counts.entry(6).or_insert(0) += v;
+                    },
+                    (k, v) => {
+                        *new_counts.entry(k - 1).or_insert(0) += v;
+                    },
+                }
             }
+            evolve(&new_counts, count - 1)
         }
-        c = new_counts;
     }
-    c.values().sum()
 }
 
 fn read_input(file: File) -> Vec<String> {
@@ -49,10 +49,8 @@ fn parse_input(input: Vec<String>) -> HashMap<usize, usize> {
     let mut vals = HashMap::new();
     for s in input[0].split(",") {
         let k = s.parse::<usize>().unwrap();
-        let count = vals.entry(k).or_insert(0);
-        *count += 1;
+        *vals.entry(k).or_insert(0) += 1;
     }
-    println!("{:?}", &vals);
     vals
 }
 
