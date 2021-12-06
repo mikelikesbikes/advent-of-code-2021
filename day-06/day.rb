@@ -1,3 +1,10 @@
+def run
+  input = parse_input(read_input)
+
+  puts evolve(input, 80)
+  puts evolve(input, 256)
+end
+
 def read_input(filename = "input.txt")
   if !STDIN.tty?
     ARGF.read
@@ -27,10 +34,25 @@ def evolve(counts, n)
   end.values.sum
 end
 
-return unless $PROGRAM_NAME == __FILE__ || $PROGRAM_NAME.end_with?("ruby-memory-profiler")
+require "rspec"
 
-input = parse_input(read_input)
+describe "day" do
+  let(:input) do
+    parse_input(File.read("test.txt"))
+  end
 
-### RUN STUFF HERE ###
-puts evolve(input, 80)
-puts evolve(input, 256)
+  let(:actual_input) do
+    parse_input(File.read("input.txt"))
+  end
+
+  it "should evolve the input n times" do
+    expect(evolve(input, 18)).to eq 26
+    expect(evolve(input, 80)).to eq 5934
+    expect(evolve(input, 256)).to eq 26984457539
+
+    expect(evolve(actual_input, 80)).to eq 362346
+    expect(evolve(actual_input, 256)).to eq 1639643057051
+  end
+end
+
+run if $PROGRAM_NAME == __FILE__ || $PROGRAM_NAME.end_with?("ruby-memory-profiler")
