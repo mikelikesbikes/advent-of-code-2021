@@ -29,7 +29,7 @@ def min_alignment_cost(positions, strategy)
   min, max = positions.minmax
   strategy = FUEL_STRATEGIES.fetch(strategy)
   (min..max).map do |i|
-    positions.map { |p| strategy.call(p, i) }.sum
+    positions.sum { |p| strategy.call(p, i) }
   end.min
 end
 
