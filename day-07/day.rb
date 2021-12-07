@@ -2,8 +2,8 @@ def run
   input = parse_input(read_input)
 
   # code to run part 1 and part 2
-  puts min_alignment_cost(input)
-  puts min_alignment_cost2(input)
+  puts min_alignment_cost(input, :linear)
+  puts min_alignment_cost(input, :triangular)
 end
 
 def read_input(filename = "input.txt")
@@ -20,23 +20,18 @@ def parse_input(input)
 end
 
 ### CODE HERE ###
-def min_alignment_cost(positions)
+FUEL_STRATEGIES = {
+  linear: ->(p, i) { (p - i).abs },
+  triangular: ->(p, i) { n = (p - i).abs; n * (n + 1) / 2 }
+}
+
+def min_alignment_cost(positions, strategy)
   min, max = positions.minmax
+  strategy = FUEL_STRATEGIES.fetch(strategy)
   (min..max).map do |i|
-    positions.map { |p| (p - i).abs }.sum
+    positions.map { |p| strategy.call(p, i) }.sum
   end.min
 end
-
-def min_alignment_cost2(positions)
-  min, max = positions.minmax
-  (min..max).map do |i|
-    positions.map do |p|
-      n = (p - i).abs
-      (n * (n + 1)) / 2
-    end.sum
-  end.min
-end
-
 
 ### TESTS HERE ###
 require "rspec"
@@ -51,13 +46,13 @@ describe "day" do
   end
 
   it "should solve part 1" do
-    expect(min_alignment_cost(input)).to eq 37
-    expect(min_alignment_cost(actual_input)).to eq 341558
+    expect(min_alignment_cost(input, :linear)).to eq 37
+    expect(min_alignment_cost(actual_input, :linear)).to eq 341558
   end
 
   it "should solve part 2" do
-    expect(min_alignment_cost2(input)).to eq 168
-    expect(min_alignment_cost2(actual_input)).to eq 93214037
+    expect(min_alignment_cost(input, :triangular)).to eq 168
+    expect(min_alignment_cost(actual_input, :triangular)).to eq 93214037
   end
 end
 
