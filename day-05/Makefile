@@ -1,18 +1,18 @@
-all: ruby rust clean
+all: ruby rust
 
 ruby:
-	echo "===== running ruby ====="
-	rspec day_spec.rb
+	rspec day.rb
 	ruby day.rb
 
-rustc:
+rustcompile:
 	rustc day.rs -o day
 	rustc --test day.rs -o daytest
 
-rust: rustc
-	echo "===== running rust ====="
+rustrun:
 	./daytest
 	./day
 
-clean:
+rustclean:
 	rm ./day ./daytest
+
+rust: rustcompile rustrun rustclean

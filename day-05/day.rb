@@ -1,3 +1,9 @@
+def run
+  analyzer = VentAnalyzer.from(read_input)
+  puts analyzer.danger_count
+  puts analyzer.danger_count(include_diagonals: true)
+end
+
 def read_input(filename = "input.txt")
   if !STDIN.tty?
     ARGF.read
@@ -58,9 +64,30 @@ Line = Struct.new(:startpoint, :endpoint) do
   end
 end
 
-return unless $PROGRAM_NAME == __FILE__ || $PROGRAM_NAME.end_with?("ruby-memory-profiler")
+require "rspec"
 
-### RUN STUFF HERE ###
-analyzer = VentAnalyzer.from(read_input)
-puts analyzer.danger_count
-puts analyzer.danger_count(include_diagonals: true)
+describe "day" do
+  let(:input) do
+    File.read("test.txt")
+  end
+
+  let(:actual_input) do
+    File.read("input.txt")
+  end
+
+  it "calculates a simple danger count" do
+    analyzer = VentAnalyzer.from(input)
+    expect(analyzer.danger_count).to eq 5
+    analyzer = VentAnalyzer.from(actual_input)
+    expect(analyzer.danger_count).to eq 5608
+  end
+
+  it "should use diagonals too" do
+    analyzer = VentAnalyzer.from(input)
+    expect(analyzer.danger_count(include_diagonals: true)).to eq 12
+    analyzer = VentAnalyzer.from(actual_input)
+    expect(analyzer.danger_count(include_diagonals: true)).to eq 20299
+  end
+end
+
+run if $PROGRAM_NAME == __FILE__ || $PROGRAM_NAME.end_with?("ruby-memory-profiler")
