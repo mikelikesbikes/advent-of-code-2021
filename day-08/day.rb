@@ -19,35 +19,48 @@ def parse_input(input)
   input.split("\n").map { |l| Entry.from(l) }
 end
 
+def to_num(str)
+  str.chars.reduce(0) { |n, c| n | (1 << (c.ord - 97)) }
+end
+
+NSEGMENTS = 7
+def bit_count(n)
+  NSEGMENTS.times.count { ((n & 1) > 0).tap { n = n >> 1 } }
+end
+
+def bit_diff(a, b)
+  a & ~b
+end
+
 Entry = Struct.new(:patterns, :output) do
   def self.from(str)
     patterns, outputs = str.split(" | ")
-    new(patterns.split(" ").map(&:chars).map(&:sort),
-        outputs.split(" ").map(&:chars).map(&:sort))
+    new(patterns.split(" ").map { |s| to_num(s) },
+        outputs.split(" ").map { |s| to_num(s) })
   end
 
   def decode
     lookup = {}
-    lookup["1"] = patterns.find { |p| p.length == 2 }
-    lookup["4"] = patterns.find { |p| p.length == 4 }
-    lookup["7"] = patterns.find { |p| p.length == 3 }
-    lookup["8"] = patterns.find { |p| p.length == 7 }
-    #
+    lookup["1"] = patterns.find { |p| bit_count(p) == 2 }
+    lookup["4"] = patterns.find { |p| bit_count(p) == 4 }
+    lookup["7"] = patterns.find { |p| bit_count(p) == 3 }
+    lookup["8"] = patterns.find { |p| bit_count(p) == 7 }
+
     # 6 digits
     # zero, six, nine
-    six_digits = patterns.select { |p| p.length == 6 }
-    lookup["6"] = six_digits.find { |six| (six - lookup["1"]).length == 5 }
+    six_digits = patterns.select { |p| bit_count(p) == 6 }
+    lookup["6"] = six_digits.find { |six| bit_count(bit_diff(six, lookup["1"])) == 5 }
     six_digits.delete(lookup["6"])
-    lookup["0"] = six_digits.find { |zero| (zero - lookup["4"]).length == 3 }
+    lookup["0"] = six_digits.find { |zero| bit_count(bit_diff(zero, lookup["4"])) == 3 }
     six_digits.delete(lookup["0"])
     lookup["9"] = six_digits.first
 
     # 5 digits
     # two, three, five
-    five_digits = patterns.select { |p| p.length == 5 }
-    lookup["3"] = five_digits.find { |three| (three - lookup["1"]).length == 3 }
+    five_digits = patterns.select { |p| bit_count(p) == 5 }
+    lookup["3"] = five_digits.find { |three| bit_count(bit_diff(three, lookup["1"])) == 3 }
     five_digits.delete(lookup["3"])
-    lookup["5"] = five_digits.find { |five| (five - lookup["9"]).length == 0 }
+    lookup["5"] = five_digits.find { |five| bit_count(bit_diff(five, lookup["9"])) == 0 }
     five_digits.delete(lookup["5"])
     lookup["2"] = five_digits.first
 
@@ -61,7 +74,7 @@ end
 def count_unique_numbers(lines)
   lines.sum do |line|
     line.output.count do |pattern|
-      [2, 4, 3, 7].include?(pattern.length)
+      [2, 4, 3, 7].include?(bit_count(pattern))
     end
   end
 end
