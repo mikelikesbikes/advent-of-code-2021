@@ -27,39 +27,31 @@ Entry = Struct.new(:patterns, :output) do
   end
 
   def decode
-    one = patterns.find { |p| p.length == 2 }
-    four = patterns.find { |p| p.length == 4 }
-    seven = patterns.find { |p| p.length == 3 }
-    eight = patterns.find { |p| p.length == 7 }
+    lookup = {}
+    lookup["1"] = patterns.find { |p| p.length == 2 }
+    lookup["4"] = patterns.find { |p| p.length == 4 }
+    lookup["7"] = patterns.find { |p| p.length == 3 }
+    lookup["8"] = patterns.find { |p| p.length == 7 }
     #
     # 6 digits
     # zero, six, nine
     six_digits = patterns.select { |p| p.length == 6 }
-    six = six_digits.find { |six| (six - one).length == 5 }
-    zero_nine = six_digits - [six]
-    zero = zero_nine.find { |zero| (zero - four).length == 3 }
-    nine = (zero_nine - [zero]).first
+    lookup["6"] = six_digits.find { |six| (six - lookup["1"]).length == 5 }
+    six_digits.delete(lookup["6"])
+    lookup["0"] = six_digits.find { |zero| (zero - lookup["4"]).length == 3 }
+    six_digits.delete(lookup["0"])
+    lookup["9"] = six_digits.first
 
     # 5 digits
     # two, three, five
     five_digits = patterns.select { |p| p.length == 5 }
-    three = five_digits.find { |three| (three - one).length == 3 }
-    two_five = five_digits - [three]
-    five = two_five.find { |five| (five - nine).length == 0 }
-    two = (two_five - [five]).first
+    lookup["3"] = five_digits.find { |three| (three - lookup["1"]).length == 3 }
+    five_digits.delete(lookup["3"])
+    lookup["5"] = five_digits.find { |five| (five - lookup["9"]).length == 0 }
+    five_digits.delete(lookup["5"])
+    lookup["2"] = five_digits.first
 
-    lookup = {
-      zero => "0",
-      one => "1",
-      two => "2",
-      three => "3",
-      four => "4",
-      five => "5",
-      six => "6",
-      seven => "7",
-      eight => "8",
-      nine => "9"
-    }
+    lookup = lookup.invert
 
     output.map { |k| lookup[k] }.join.to_i
   end
