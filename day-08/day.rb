@@ -38,6 +38,10 @@ def bit_diff(a, b)
   a & ~b
 end
 
+def delete_first(arr, &block)
+  arr.delete_at(arr.index(&block))
+end
+
 Entry = Struct.new(:patterns, :output) do
   def self.from(str)
     patterns, outputs = str.split(" | ")
@@ -48,15 +52,15 @@ Entry = Struct.new(:patterns, :output) do
   def decode
     lookup = Array.new(10)
     ps = patterns.dup
-    lookup[1] = ps.delete_at(ps.index { |p| bit_count(p) == 2 })
-    lookup[4] = ps.delete_at(ps.index { |p| bit_count(p) == 4 })
-    lookup[7] = ps.delete_at(ps.index { |p| bit_count(p) == 3 })
-    lookup[8] = ps.delete_at(ps.index { |p| bit_count(p) == 7 })
-    lookup[6] = ps.delete_at(ps.index { |n| bit_count(n) == 6 && bit_count(bit_diff(n, lookup[1])) == 5 })
-    lookup[0] = ps.delete_at(ps.index { |n| bit_count(n) == 6 && bit_count(bit_diff(n, lookup[4])) == 3 })
-    lookup[9] = ps.delete_at(ps.index { |n| bit_count(n) == 6 })
-    lookup[3] = ps.delete_at(ps.index { |n| bit_count(bit_diff(n, lookup[1])) == 3 })
-    lookup[5] = ps.delete_at(ps.index { |n| bit_count(bit_diff(n, lookup[9])) == 0 })
+    lookup[1] = delete_first(ps) { |n| bit_count(n) == 2 }
+    lookup[4] = delete_first(ps) { |n| bit_count(n) == 4 }
+    lookup[7] = delete_first(ps) { |n| bit_count(n) == 3 }
+    lookup[8] = delete_first(ps) { |n| bit_count(n) == 7 }
+    lookup[6] = delete_first(ps) { |n| bit_count(n) == 6 && bit_count(bit_diff(n, lookup[1])) == 5 }
+    lookup[0] = delete_first(ps) { |n| bit_count(n) == 6 && bit_count(bit_diff(n, lookup[4])) == 3 }
+    lookup[9] = delete_first(ps) { |n| bit_count(n) == 6 }
+    lookup[3] = delete_first(ps) { |n| bit_count(bit_diff(n, lookup[1])) == 3 }
+    lookup[5] = delete_first(ps) { |n| bit_count(bit_diff(n, lookup[9])) == 0 }
     lookup[2] = ps.delete_at(0)
 
     output.reduce(0) { |acc, k| acc * 10 + lookup.index(k) }
