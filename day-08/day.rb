@@ -20,12 +20,18 @@ def parse_input(input)
 end
 
 def to_num(str)
-  str.chars.reduce(0) { |n, c| n | (1 << (c.ord - 97)) }
+  str.bytes.reduce(0) { |n, c| n | (1 << (c - 97)) }
 end
 
-NSEGMENTS = 7
 def bit_count(n)
-  NSEGMENTS.times.count { ((n & 1) > 0).tap { n = n >> 1 } }
+  i = 0
+  count = 0
+  while i < 7
+    count += 1 if (n & 1) > 0
+    n = n >> 1
+    i += 1
+  end
+  count
 end
 
 def bit_diff(a, b)
@@ -40,33 +46,20 @@ Entry = Struct.new(:patterns, :output) do
   end
 
   def decode
-    lookup = {}
-    lookup["1"] = patterns.find { |p| bit_count(p) == 2 }
-    lookup["4"] = patterns.find { |p| bit_count(p) == 4 }
-    lookup["7"] = patterns.find { |p| bit_count(p) == 3 }
-    lookup["8"] = patterns.find { |p| bit_count(p) == 7 }
+    lookup = Array.new(10)
+    ps = patterns.dup
+    lookup[1] = ps.delete_at(ps.index { |p| bit_count(p) == 2 })
+    lookup[4] = ps.delete_at(ps.index { |p| bit_count(p) == 4 })
+    lookup[7] = ps.delete_at(ps.index { |p| bit_count(p) == 3 })
+    lookup[8] = ps.delete_at(ps.index { |p| bit_count(p) == 7 })
+    lookup[6] = ps.delete_at(ps.index { |n| bit_count(n) == 6 && bit_count(bit_diff(n, lookup[1])) == 5 })
+    lookup[0] = ps.delete_at(ps.index { |n| bit_count(n) == 6 && bit_count(bit_diff(n, lookup[4])) == 3 })
+    lookup[9] = ps.delete_at(ps.index { |n| bit_count(n) == 6 })
+    lookup[3] = ps.delete_at(ps.index { |n| bit_count(bit_diff(n, lookup[1])) == 3 })
+    lookup[5] = ps.delete_at(ps.index { |n| bit_count(bit_diff(n, lookup[9])) == 0 })
+    lookup[2] = ps.delete_at(0)
 
-    # 6 digits
-    # zero, six, nine
-    six_digits = patterns.select { |p| bit_count(p) == 6 }
-    lookup["6"] = six_digits.find { |six| bit_count(bit_diff(six, lookup["1"])) == 5 }
-    six_digits.delete(lookup["6"])
-    lookup["0"] = six_digits.find { |zero| bit_count(bit_diff(zero, lookup["4"])) == 3 }
-    six_digits.delete(lookup["0"])
-    lookup["9"] = six_digits.first
-
-    # 5 digits
-    # two, three, five
-    five_digits = patterns.select { |p| bit_count(p) == 5 }
-    lookup["3"] = five_digits.find { |three| bit_count(bit_diff(three, lookup["1"])) == 3 }
-    five_digits.delete(lookup["3"])
-    lookup["5"] = five_digits.find { |five| bit_count(bit_diff(five, lookup["9"])) == 0 }
-    five_digits.delete(lookup["5"])
-    lookup["2"] = five_digits.first
-
-    lookup = lookup.invert
-
-    output.map { |k| lookup[k] }.join.to_i
+    output.reduce(0) { |acc, k| acc * 10 + lookup.index(k) }
   end
 end
 
