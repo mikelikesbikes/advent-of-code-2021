@@ -14,7 +14,9 @@ def read_input(filename = "input.txt")
 end
 
 def parse_input(input)
-  input.split(",").map(&:to_i).tally
+  input.split("\n").map do |line|
+    line.to_i
+  end
 end
 
 ### CODE HERE ###
@@ -32,12 +34,10 @@ describe "day" do
     parse_input(File.read("input.txt"))
   end
 
-  it "should solve part 1" do
-    expect(true).to eq false
+  xit "should solve part 1" do
   end
 
-  it "should solve part 2" do
-    expect(true).to eq false
+  xit "should solve part 2" do
   end
 end
 

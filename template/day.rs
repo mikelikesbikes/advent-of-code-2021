@@ -11,7 +11,7 @@ fn main() {
     if args.len() > 1 {
         filename = &args[1];
     }
-    let file = File::open(filename).expect("input file to be found");
+    let file = File::open(filename).expect(format!("input file '{}' not found", filename).as_str());
     let input = &parse_input(read_input(file));
 
     println!("input length: {}", input.len());
@@ -48,14 +48,16 @@ mod aoc_tests {
     }
 
     #[test]
+    #[ignore]
     fn test_part1() {
         assert!(test_input().len() > 0);
         assert!(actual_input().len() > 0);
-        assert_eq!(true, true);
+        panic!("not implemented");
     }
 
     #[test]
+    #[ignore]
     fn test_part2() {
-        assert_eq!(true, true);
+        panic!("not implemented");
     }
 }
