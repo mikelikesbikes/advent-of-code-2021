@@ -2,7 +2,7 @@ all: ruby rust
 
 ruby:
 	rspec day.rb
-	ruby day.rb
+	time ruby day.rb
 
 rustcompile:
 	rustc day.rs -o day
@@ -10,7 +10,7 @@ rustcompile:
 
 rustrun:
 	./daytest
-	./day
+	time ./day
 
 rustclean:
 	rm ./day ./daytest
