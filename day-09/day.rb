@@ -36,12 +36,12 @@ end
 
 def find_basin(pos, input)
   basin = Set.new
-  nextp = [pos]
-  while nextp.length > 0
-    p = nextp.shift
-    next if basin.member?(p)
-    basin << p
-    nextp.push(*adjacent(input, p).reject { |p| input[p] == 9 })
+  to_visit = [pos]
+  while to_visit.length > 0
+    pos = to_visit.shift
+    next if basin.member?(pos)
+    basin << pos
+    to_visit.push(*adjacent(input, pos).reject { |p| input[p] == 9 })
   end
   basin
 end
