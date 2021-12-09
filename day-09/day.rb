@@ -18,58 +18,40 @@ def read_input(filename = "input.txt")
 end
 
 def parse_input(input)
-  input.split("\n").map { |l| l.chars.map(&:to_i) }
+  map = {}
+  input.split("\n").each_with_index { |l, y| l.chars.each_with_index { |c, x| map[[x, y]] = c.to_i } }
+  map
 end
 
 ### CODE HERE ###
 def risk_level(input)
-  maxx = input.first.length - 1
-  maxy = input.length - 1
-  low_points = []
-  input.each_with_index do |row, y|
-    row.each_with_index do |cell, x|
-      if adjacent(x, y, maxx, maxy).all? { |x2, y2| input[y2][x2] > cell }
-        low_points << cell
-      end
-    end
-  end
-  low_points.sum { |x| x + 1 }
+  find_low_points(input).sum { |_, v| v + 1 }
 end
 
-def find_basins(input)
-  maxx = input.first.length - 1
-  maxy = input.length - 1
-  basin_index = 0
-  adjacencies = {}
-  input.each_with_index do |row, y|
-    row.each_with_index do |cell, x|
-      next if cell == 9
-      adjacencies[[x, y]] = adjacent(x, y, maxx, maxy).reject { |x, y| input[y][x] == 9 }
-    end
+def find_low_points(input)
+  input.select do |pos, cell|
+    adjacent(input, pos).all? { |adj| cell < input[adj] }
   end
+end
 
-  basins = []
-  while adjacencies.length > 0
-    basin = Set.new
-    nextp = [adjacencies.first.first]
-    while nextp.length > 0
-      p = nextp.shift
-      next if basin.member?(p)
-      basin << p
-      adjacents = adjacencies.delete(p)
-      nextp.push(*adjacents)
-    end
-    basins << basin
+def find_basin(pos, input)
+  basin = Set.new
+  nextp = [pos]
+  while nextp.length > 0
+    p = nextp.shift
+    next if basin.member?(p)
+    basin << p
+    nextp.push(*adjacent(input, p).reject { |p| input[p] == 9 })
   end
-  basins
+  basin
 end
 
 def basin_score(input)
-  find_basins(input).map { |basin| basin.length }.sort.last(3).reduce(:*)
+  find_low_points(input).map { |pos, _| find_basin(pos, input).length }.sort.last(3).reduce(:*)
 end
 
-def adjacent(x, y, maxx, maxy)
-  [[0, -1], [1, 0], [0, 1], [-1, 0]].map { |dx, dy| [x + dx, y + dy] }.select { |xx, yy| xx >= 0 && xx <= maxx && yy >= 0 && yy <= maxy }
+def adjacent(input, (x, y))
+  [[0, -1], [1, 0], [0, 1], [-1, 0]].map { |dx, dy| [x + dx, y + dy] }.select { |pos| input[pos] }
 end
 
 ### TESTS HERE ###
