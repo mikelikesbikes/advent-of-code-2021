@@ -1,4 +1,4 @@
-require 'set'
+require "set"
 
 def run
   input = parse_input(read_input)
@@ -47,11 +47,17 @@ def find_basin(pos, input)
 end
 
 def basin_score(input)
-  find_low_points(input).map { |pos, _| find_basin(pos, input).length }.sort.last(3).reduce(:*)
+  find_low_points(input)
+    .each_with_object(Set.new) { |(pos, _), basins| basins << find_basin(pos, input) }
+    .map { |basin| basin.length }
+    .sort
+    .last(3)
+    .reduce(:*)
 end
 
+DXDY = [[0, -1], [1, 0], [0, 1], [-1, 0]].map(&:freeze).freeze
 def adjacent(input, (x, y))
-  [[0, -1], [1, 0], [0, 1], [-1, 0]].map { |dx, dy| [x + dx, y + dy] }.select { |pos| input[pos] }
+  DXDY.map { |dx, dy| [x + dx, y + dy] }.select { |pos| input[pos] }
 end
 
 ### TESTS HERE ###
@@ -72,6 +78,13 @@ describe "day" do
 
   it "should solve part 2" do
     expect(basin_score(input)).to eq 1134
+  end
+
+  it "should find a basin only once" do
+    weird_one = parse_input("5432123212345")
+    low_points = find_low_points(weird_one)
+    expect(low_points.length).to eq 2
+    expect(basin_score(weird_one)).to eq 13
   end
 end
 
