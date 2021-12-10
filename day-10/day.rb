@@ -21,11 +21,11 @@ end
 
 ### CODE HERE ###
 SYNTAX_ERROR_SCORES = { ")" => 3, "]" => 57, "}" => 1197, ">" => 25137 }.freeze
-def syntax_error_score(input)
-  input.sum do |line|
+def syntax_error_score(lines)
+  lines.sum do |line|
     autocomplete_line(line) and 0
   rescue => e
-    SYNTAX_ERROR_SCORES[e.actual]
+    SYNTAX_ERROR_SCORES[e.token]
   end
 end
 
@@ -37,32 +37,33 @@ end
 
 def autocomplete_score(lines)
   lines
-    .map { |l| score_completion(autocomplete_line(l)) rescue nil }
+    .map { |l| autocomplete_line(l) rescue nil }
     .compact
+    .map { |l| score_completion(l) }
     .sort
     .yield_self { |s| s[s.length / 2] }
 end
 
-MATCHES = { "(" => ")", "[" => "]", "{" => "}", "<" => ">" }.freeze
 class AutocompleteError < StandardError
-  attr_reader :expected, :actual
-  def initialize(expected, actual)
-    @expected = expected
-    @actual = actual
-    super("Expected #{expected}, but found #{actual} instead.")
+  attr_reader :expected_token, :token
+  def initialize(expected_token, token)
+    @expected_token = expected_token
+    @token = token
+    super("Expected #{expected_token}, but found #{token} instead.")
   end
 end
 
+MATCHES = { "(" => ")", "[" => "]", "{" => "}", "<" => ">" }.freeze
 def autocomplete_line(line)
-  l = line.chars
+  line = line.chars
   tokens = []
-  while l.length > 0
-    t = l.shift
-    if MATCHES.key?(t)
-      tokens.push(t)
+  while line.length > 0
+    token = line.shift
+    if MATCHES.key?(token)
+      tokens.push(token)
     else
-      lt = tokens.pop
-      raise AutocompleteError.new(lt, t) unless MATCHES[lt] == t
+      expected_token = MATCHES[tokens.pop]
+      raise AutocompleteError.new(expected_token, token) unless expected_token == token
     end
   end
   tokens.reverse.map { |t| MATCHES[t] }.join
@@ -83,6 +84,7 @@ describe "day" do
 
   it "should solve part 1" do
     expect(syntax_error_score(input)).to eq 26397
+    expect(syntax_error_score(actual_input)).to eq 411471
   end
 
   it "should find corrupted lines" do
@@ -97,6 +99,7 @@ describe "day" do
 
   it "should solve part 2" do
     expect(autocomplete_score(input)).to eq 288957
+    expect(autocomplete_score(actual_input)).to eq 3122628974
   end
 
   it "should find incomplete lines" do
