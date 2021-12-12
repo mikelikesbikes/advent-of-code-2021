@@ -23,37 +23,24 @@ def parse_input(input)
   end
 end
 
-### CODE HERE ###
-def count_paths(map)
-  finished_paths = []
-  wip_paths = [["start"]]
-  while wip_paths.length > 0
-    path = wip_paths.shift
-    map[path.last].each do |n|
-      next if n.match?(/[a-z]+/) && path.include?(n)
-      npath = path + [n]
-      if n == "end"
-        finished_paths << npath
-      else
-        wip_paths << npath
-      end
-    end
-  end
-  finished_paths.length
-end
+CAN_VISIT = {
+  no_repeats: ->(node, path) { !(node.match?(/[a-z]+/) && path.include?(node)) },
+  one_repeat: ->(node, path) { !(node == "start" || node.match?(/[a-z]+/) && path.select { |n| n.match?(/[a-z]+/) }.tally.values.include?(2) && path.include?(node)) }
+}
 
-def count_paths_2(map)
+### CODE HERE ###
+def count_paths(map, strategy)
   finished_paths = []
   wip_paths = [["start"]]
   while wip_paths.length > 0
     path = wip_paths.shift
-    map[path.last].each do |n|
-      next if n == "start" || n.match?(/[a-z]+/) && path.select { |n| n.match?(/[a-z]+/) }.tally.values.include?(2) && path.include?(n)
-      npath = path + [n]
-      if n == "end"
-        finished_paths << npath
+    map[path.last].each do |node|
+      next unless CAN_VISIT[strategy].call(node, path)
+      npath = path + [node]
+      if node == "end"
+        finished_paths.push(npath)
       else
-        wip_paths << npath
+        wip_paths.push(npath)
       end
     end
   end
@@ -73,13 +60,13 @@ describe "day" do
   end
 
   it "should solve part 1" do
-    expect(count_paths(input)).to eq 10
-    expect(count_paths(actual_input)).to eq 4912
+    expect(count_paths(input, :no_repeats)).to eq 10
+    expect(count_paths(actual_input, :no_repeats)).to eq 4912
   end
 
   it "should solve part 2" do
-    expect(count_paths_2(input)).to eq 36
-    expect(count_paths_2(actual_input)).to eq 150004
+    expect(count_paths(input, :one_repeat)).to eq 36
+    expect(count_paths(actual_input, :one_repeat)).to eq 150004
   end
 end
 
