@@ -1,12 +1,14 @@
+require "set"
+
 def run
-  input = parse_input(read_input)
+  paper = parse_input(read_input)
 
   # code to run part 1 and part 2
-  input.fold
-  puts input.dot_count
+  paper.fold
+  puts paper.dot_count
 
-  input.fold_all
-  puts input
+  paper.fold_all
+  puts paper
 end
 
 def read_input(filename = "input.txt")
@@ -19,49 +21,61 @@ def read_input(filename = "input.txt")
 end
 
 def parse_input(input)
-  dots, folds = input.split("\n\n")
+  Paper.from(input)
+end
 
-  dots = dots.split("\n").each_with_object({}) do |line, dots|
-    x, y = line.split(",")
-    dots[[x.to_i, y.to_i]] = true
+Point = Struct.new(:x, :y) do
+  def fold(fold)
+    case fold.axis
+    when :x
+      fold.n < x ? Point.new(2*fold.n - x, y) : self
+    when :y
+      fold.n < y ? Point.new(x, 2*fold.n - y) : self
+    end
   end
 
-  folds = folds.split("\n").map do |line|
-    axis, n = line[11..].split("=")
-    [axis, n.to_i]
+  def self.from(str)
+    new(*str.split(COMMA_STR).map!(&:to_i))
   end
+end
 
-  Paper.new(dots, folds)
+Fold = Struct.new(:axis, :n) do
+  def self.from(str)
+    axis, n = str[11..].split(EQUAL_STR)
+    new(axis.to_sym, n.to_i)
+  end
 end
 
 Paper = Struct.new(:dots, :folds) do
-  def fold
-    axis, n = folds.shift
-    if axis == "x"
-      fold_horizontal(n)
-    else
-      fold_vertical(n)
+  COMMA_STR = ",".freeze
+  NEWL_STR = "\n".freeze
+  BLANK_LINE_STR = "\n\n".freeze
+  EQUAL_STR = "=".freeze
+  EMPTY_STR = ".".freeze
+  DOT_STR = "#".freeze
+  def self.from(str)
+    dots, folds = str.split(BLANK_LINE_STR)
+
+    dots = dots.split(NEWL_STR).each_with_object(Set.new) do |line, dots|
+      dots << Point.from(line)
     end
+
+    folds = folds.split(NEWL_STR).map do |line|
+      Fold.from(line)
+    end
+
+    Paper.new(dots, folds)
+  end
+
+  def fold
+    fold = folds.shift
+    dots
+      .map { |dot| dot.fold(fold) }
+      .each_with_object(dots.clear) { |dot| dots << dot }
   end
 
   def fold_all
-    while folds.length > 0
-      fold
-    end
-  end
-
-  def fold_vertical(n)
-    dots.select { |(x, y), v| y > n }.each do |(x, y), v|
-      dots[[x, n - (y - n)]] = true
-      dots.delete([x, y])
-    end
-  end
-
-  def fold_horizontal(n)
-    dots.select { |(x, y), v| x > n }.each do |(x, y), v|
-      dots[[n - (x - n), y]] = true
-      dots.delete([x, y])
-    end
+    fold while folds.length > 0
   end
 
   def dot_count
@@ -69,14 +83,17 @@ Paper = Struct.new(:dots, :folds) do
   end
 
   def to_s
-    maxx = dots.map { |(x, y), _| x }.max
-    maxy = dots.map { |(x, y), _| y }.max
+    maxx = maxy = 0
+    dots.each do |p|
+      maxx = p.x if p.x > maxx
+      maxy = p.y if p.y > maxy
+    end
 
     (0..maxy).map do |y|
       (0..maxx).map do |x|
-        dots[[x, y]] ? "#" : "."
+        dots.member?(Point.new(x,y)) ? DOT_STR : EMPTY_STR
       end.join
-    end.join("\n")
+    end.join(NEWL_STR)
   end
 end
 
