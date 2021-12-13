@@ -74,10 +74,12 @@ describe "day" do
 
   it "should solve part 1" do
     expect(risk_level(input)).to eq 15
+    expect(risk_level(actual_input)).to eq 512
   end
 
   it "should solve part 2" do
     expect(basin_score(input)).to eq 1134
+    expect(basin_score(actual_input)).to eq 1600104
   end
 
   it "should find a basin only once" do
