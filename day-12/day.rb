@@ -2,8 +2,8 @@ def run
   input = parse_input(read_input)
 
   # code to run part 1 and part 2
-  puts count_paths(input)
-  puts count_paths_2(input)
+  puts count_paths(input, :no_repeats)
+  puts count_paths(input, :one_repeat)
 end
 
 def read_input(filename = "input.txt")
@@ -18,33 +18,62 @@ end
 def parse_input(input)
   input.split("\n").each_with_object(Hash.new { |h,k| h[k] = [] }) do |line, map|
     c1, c2 = line.split("-")
-    map[c1] << c2
-    map[c2] << c1
+    map[c1.to_sym] << c2.to_sym
+    map[c2.to_sym] << c1.to_sym
   end
 end
 
 CAN_VISIT = {
   no_repeats: ->(node, path) { !(node.match?(/[a-z]+/) && path.include?(node)) },
-  one_repeat: ->(node, path) { !(node == "start" || node.match?(/[a-z]+/) && path.select { |n| n.match?(/[a-z]+/) }.tally.values.include?(2) && path.include?(node)) }
+  one_repeat: ->(node, path) { !(node == :start || node.match?(/[a-z]+/) && path.has_repeat? && path.include?(node)) }
 }
 
-### CODE HERE ###
-def count_paths(map, strategy)
-  finished_paths = []
-  wip_paths = [["start"]]
-  while wip_paths.length > 0
-    path = wip_paths.shift
-    map[path.last].each do |node|
-      next unless CAN_VISIT[strategy].call(node, path)
-      npath = path + [node]
-      if node == "end"
-        finished_paths.push(npath)
-      else
-        wip_paths.push(npath)
-      end
+Path = Struct.new(:smalls, :path) do
+  def self.build(path)
+    new(Hash.new(0), []).tap do |p|
+      path.each { |node| p.push(node) }
     end
   end
-  finished_paths.length
+
+  def push(node)
+    if node.match?(/[a-z]+/)
+      smalls[node] += 1
+    end
+    path.push(node)
+  end
+
+  def pop
+    last = path.pop
+    smalls[last] -= 1
+  end
+
+  def has_repeat?
+    smalls.each_value { |v| return true if v > 1 }
+    false
+  end
+
+  def include?(node)
+    path.include?(node)
+  end
+
+  def last
+    path.last
+  end
+end
+
+def count_paths(map, strategy, path = Path.build([:start]))
+  return 1 if path.last == :end
+  map[path.last]
+    .sum do |node|
+      if CAN_VISIT[strategy].call(node, path)
+        path.push(node)
+        count = count_paths(map, strategy, path)
+        path.pop
+        count
+      else
+        0
+      end
+    end
 end
 
 ### TESTS HERE ###
