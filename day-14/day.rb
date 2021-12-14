@@ -22,22 +22,27 @@ def parse_input(input)
   Polymer.build(input)
 end
 
-Polymer = Struct.new(:pairs, :rules, :last_char) do
+Polymer = Struct.new(:pairs, :rules) do
   def self.build(str)
     template, rules = str.split("\n\n")
-    pairs = template.chars.each_cons(2).tally
+    # delimit the string with a character so that we can track the last
+    # character as the first character in the last pair
+    pairs = (template + "-").chars.each_cons(2).tally
     rules = rules.split("\n").each_with_object({}) do |line, rules|
       pair, insert = line.split(" -> ")
       rules[pair.chars] = insert
     end
-
-    new(pairs, rules, template[-1])
+    new(pairs, rules)
   end
 
   def expand
     self.pairs = pairs.each_with_object(Hash.new(0)) do |(k, v), pairs|
-      pairs[[k[0], rules[k]]] += v
-      pairs[[rules[k], k[1]]] += v
+      if ch = rules[k]
+        pairs[[k[0], ch]] += v
+        pairs[[ch, k[1]]] += v
+      else
+        pairs[k] += v
+      end
     end
   end
 
@@ -45,7 +50,6 @@ Polymer = Struct.new(:pairs, :rules, :last_char) do
     tally = pairs.each_with_object(Hash.new(0)) do |((c1, _), v), tally|
       tally[c1] += v
     end
-    tally[last_char] += 1
     min, max = tally.values.minmax
     max - min
   end
