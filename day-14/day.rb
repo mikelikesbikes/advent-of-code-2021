@@ -5,7 +5,7 @@ def run
   10.times { input.expand }
   puts input.score
 
-  30.times { |i| puts 10 + i; input.expand }
+  30.times { |i| input.expand }
   puts input.score
 end
 
@@ -42,7 +42,7 @@ Polymer = Struct.new(:pairs, :rules, :last_char) do
   end
 
   def score
-    tally = pairs.each_with_object(Hash.new(0)) do |((c1, c2), v), tally|
+    tally = pairs.each_with_object(Hash.new(0)) do |((c1, _), v), tally|
       tally[c1] += v
     end
     tally[last_char] += 1
@@ -65,11 +65,17 @@ describe "day" do
   it "should solve part 1" do
     10.times { input.expand }
     expect(input.score).to eq 1588
+
+    10.times { actual_input.expand }
+    expect(actual_input.score).to eq 2590
   end
 
   it "should solve part 2" do
     40.times { input.expand }
     expect(input.score).to eq 2188189693529
+
+    40.times { actual_input.expand }
+    expect(actual_input.score).to eq 2875665202438
   end
 end
 
