@@ -19,53 +19,38 @@ def read_input(filename = "input.txt")
 end
 
 def parse_input(input)
-  template, rules = input.split("\n\n")
-  rules = rules.split("\n").each_with_object({}) do |line, rules|
-    pair, insert = line.split(" -> ")
-    rules[pair] = pair.dup.insert(1, insert)
-  end
-  Polymer.new(template, rules)
+  Polymer.build(input)
 end
 
-Polymer = Struct.new(:template, :rules) do
+Polymer = Struct.new(:pairs, :rules, :last_char) do
+  def self.build(str)
+    template, rules = str.split("\n\n")
+    pairs = template.chars.each_cons(2).tally
+    rules = rules.split("\n").each_with_object({}) do |line, rules|
+      pair, insert = line.split(" -> ")
+      rules[pair.chars] = insert
+    end
+
+    new(pairs, rules, template[-1])
+  end
+
   def expand
-    i = template.length - 2
-    while i >= 0
-      s = template[i,2]
-      if insert = rules[s]
-        template.insert(i+1, insert)
-      end
-      i -= 1
+    self.pairs = pairs.each_with_object(Hash.new(0)) do |(k, v), pairs|
+      pairs[[k[0], rules[k]]] += v
+      pairs[[rules[k], k[1]]] += v
     end
   end
 
-  def expand
-    self.template = expands(template)
-  end
-
-  def expands(s)
-    return s if s.length == 1
-    return rules[s] if rules[s]
-    s1 = expands(s[0...s.length / 2])
-    s2 = expands(s[s.length / 2..-1])
-
-    rules[s] = s1[0..-2] + rules.fetch(s1[-1] + s2[0], "") + s2[1..-1]
-  end
-
-  def to_s
-    template
-  end
-
   def score
-    min, max = template.each_char.each_with_object(Hash.new(0)) { |c, h| h[c] += 1 }.values.minmax
+    tally = pairs.each_with_object(Hash.new(0)) do |((c1, c2), v), tally|
+      tally[c1] += v
+    end
+    tally[last_char] += 1
+    min, max = tally.values.minmax
     max - min
   end
 end
 
-### CODE HERE ###
-
-
-### TESTS HERE ###
 require "rspec"
 
 describe "day" do
@@ -78,28 +63,11 @@ describe "day" do
   end
 
   it "should solve part 1" do
-    input.expand
-    expect(input.to_s).to eq "NCNBCHB"
-
-    input.expand
-    expect(input.to_s).to eq "NBCCNBBBCBHCB"
-
-    input.expand
-    expect(input.to_s).to eq "NBBBCNCCNBBNBNBBCHBHHBCHB"
-
-    input.expand
-    expect(input.to_s).to eq "NBBNBNBBCCNBCNCCNBBNBBNBBBNBBNBBCBHCBHHNHCBBCBHCB"
-
-    input.expand
-    expect(input.to_s.length).to eq 97
-
-    5.times { input.expand }
-    expect(input.to_s.length).to eq 3073
-
+    10.times { input.expand }
     expect(input.score).to eq 1588
   end
 
-  xit "should solve part 2" do
+  it "should solve part 2" do
     40.times { input.expand }
     expect(input.score).to eq 2188189693529
   end
