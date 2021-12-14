@@ -19,39 +19,48 @@ def read_input(filename = "input.txt")
 end
 
 def parse_input(input)
-  Polymer.build(input)
+  Polymer.from(input)
 end
 
+BLANK_LINE_STR = "\n\n"
+NEWL_STR = "\n"
+ARROW_STR = " -> "
 Polymer = Struct.new(:pairs, :rules) do
-  def self.build(str)
-    template, rules = str.split("\n\n")
+  def self.from(str)
+    template, rules = str.split(BLANK_LINE_STR)
+
     # delimit the string with a character so that we can track the last
     # character as the first character in the last pair
-    pairs = (template + "-").chars.each_cons(2).map(&:join).tally
-    rules = rules.split("\n").each_with_object({}) do |line, rules|
-      pair, insert = line.split(" -> ")
-      rules[pair] = insert
-    end
+    pairs = (template + "☃").chars.each_cons(2).map(&:join).tally
+
+    # generate the expansion rules, so that a given pair returns the 2 pairs it
+    # expands to
+    rules = rules
+      .split(NEWL_STR)
+      .each_with_object(Hash.new {|h, k| h[k] = [k]}) do |line, rules|
+        pair, insert = line.split(ARROW_STR)
+        rules[pair] = [pair[0] + insert, insert + pair[1]]
+      end
+
     new(pairs, rules)
   end
 
   def expand
-    self.pairs = pairs.each_with_object(Hash.new(0)) do |(k, v), pairs|
-      if ch = rules[k]
-        pairs[k[0] + ch] += v
-        pairs[ch + k[1]] += v
-      else
-        pairs[k] += v
+    new_pairs = Hash.new(0)
+    pairs.each_pair do |k, v|
+      rules[k].each do |pair|
+        new_pairs[pair] += v
       end
     end
+    self.pairs = new_pairs
   end
 
   def score
-    tally = pairs.each_with_object(Hash.new(0)) do |(k, v), tally|
-      tally[k[0]] += v
-    end
-    min, max = tally.values.minmax
-    max - min
+    pairs
+      .each_with_object(Hash.new(0)) { |(k, v), tally| tally[k[0]] += v }
+      .values
+      .minmax
+      .yield_self { |min, max| max - min }
   end
 end
 
