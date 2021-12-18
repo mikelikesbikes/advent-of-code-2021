@@ -66,14 +66,7 @@ PairNode = Struct.new(:left, :right) do
   end
 
   def reduce
-    #p self.to_a
-    if explode
-      #puts "exploded"
-      reduce
-    elsif split
-      #puts "split"
-      reduce
-    end
+    reduce if explode || split
   end
 
   def to_a
