@@ -1,9 +1,13 @@
+require "set"
+
 def run
   input = parse_input(read_input)
 
   # code to run part 1 and part 2
   input.align
   puts input.beacons.length
+
+  puts input.max_scanner_distance
 end
 
 def read_input(filename = "input.txt")
@@ -30,13 +34,32 @@ ScannerArray = Struct.new(:scanners) do
     while unaligned.length > 0
       next_scanner = unaligned.find do |s2|
         aligned.find do |a|
-          a.align(s2, min_alignment)
+          s2.align_to(a, min_alignment)
         end
       end
       raise "no scanner to align" unless next_scanner
       unaligned.delete(next_scanner)
       aligned.push(next_scanner)
     end
+  end
+
+  def beacons
+    scanners.each_with_object(Set.new) do |scanner, beacons|
+      beacons.merge(scanner.offset_beacons)
+    end
+  end
+
+  def max_scanner_distance
+    max_d = 0
+    (0...(scanners.length - 1)).each do |i|
+      (1...scanners.length).each do |j|
+        x1, y1, z1 = scanners[i].pos
+        x2, y2, z2 = scanners[j].pos
+        dist = (x1 - x2).abs + (y1 - y2).abs + (z1 - z2).abs
+        max_d = dist if dist > max_d
+      end
+    end
+    max_d
   end
 end
 
@@ -50,14 +73,20 @@ Scanner = Struct.new(:x, :y, :z, :beacons) do
     @distances
   end
 
+  def simple_distances
+    @simple_distances ||= distances.map { |k, v| [k.sum, v] }.to_h
+  end
+
   def calc_distances
     @distances = {}
-    (0..(beacons.length - 2)).each do |i|
-      ((i + 1)..(beacons.length - 1)).each do |j|
-        distance_vec = beacons[i].diff(beacons[j])
+    (0...beacons.length).each do |i|
+      (0...beacons.length).each do |j|
+        next if i == j
+        distance_vec = beacons[i].dist(beacons[j])
         @distances[distance_vec] = [beacons[i], beacons[j]]
       end
     end
+    @simple_distances = nil
   end
 
   def self.from(str)
@@ -65,14 +94,22 @@ Scanner = Struct.new(:x, :y, :z, :beacons) do
     new(0, 0, 0, beacons.map { |s| Beacon.from(s) })
   end
 
-  def align(other, min_alignment = 12)
+  def align_to(other, min_alignment = 12)
+    overlapping = self.simple_distances.keys & other.simple_distances.keys
+    d0 = overlapping.flat_map { |k| other.simple_distances[k] }.uniq.sort_by(&:to_a)
+    d1 = overlapping.flat_map { |k| simple_distances[k] }.uniq.sort_by(&:to_a)
+    return nil unless d0.length >= min_alignment
+
+    reorient_to(other)
+
     overlapping = self.distances.keys & other.distances.keys
     d0 = overlapping.flat_map { |k| other.distances[k] }.uniq.sort_by(&:to_a)
     d1 = overlapping.flat_map { |k| distances[k] }.uniq.sort_by(&:to_a)
+
     return nil unless d0.length >= min_alignment
 
-    reorient(other)
-    other.move(*d1.first.diff(d0.first))
+    p = other.pos.zip(d0.first.diff(d1.first)).map(&:sum)
+    move(*p)
     self
   end
 
@@ -113,7 +150,7 @@ Scanner = Struct.new(:x, :y, :z, :beacons) do
     ->(x, y, z) { [-x, -z, -y] },
     ->(x, y, z) { [-y, -z,  x] },
   ].freeze
-  def reorient(other)
+  def reorient_to(other)
     # find overlapping beacons (by distance)
 
     # try orientations until overlapping beacons all have the same diff vector (not just absolute distance)
@@ -124,20 +161,15 @@ Scanner = Struct.new(:x, :y, :z, :beacons) do
       transformed_keys = distances.keys.map { |x,y,z| t.call(x, y, z) }
       overlapping_keys = (transformed_keys & other.distances.keys)
       [overlapping_keys.length, t]
-    end.max_by { |a, _| a }
+    end
 
-    #other.distances.keys.zip(distances.keys).each do |b0, b1|
-    #  txyz = b0.to_a
-    #  transforms = transforms.select do |t|
-    #    t.call(b1.x, b1.y, b1.z) == txyz
-    #  end
-    #end
+    transform = transform.max_by(&:first).last
 
-    beacons.each { |b| b.apply_transform(transform.last) }
+    beacons.each { |b| b.apply_transform(transform) }
     calc_distances
   end
 
-  def offset_beacons(offset)
+  def offset_beacons(offset = pos)
     beacons.map do |b|
       b.offset(*offset)
     end
@@ -151,7 +183,6 @@ Scanner = Struct.new(:x, :y, :z, :beacons) do
     self.x = x
     self.y = y
     self.z = z
-
   end
 end
 
@@ -169,7 +200,7 @@ Beacon = Struct.new(:x, :y, :z) do
   end
 
   def dist(other)
-    diff(other).sum { |n| n.abs }
+    diff(other)#.map { |n| n.abs }
   end
 
   def offset(dx, dy, dz)
@@ -196,7 +227,7 @@ describe "day 19" do
     parse_input(File.read("input.txt"))
   end
 
-  xit "should solve part 1" do
+  it "should solve part 1" do
     input.align
     expect(input.beacons.length).to eq 79
   end
@@ -262,17 +293,22 @@ describe "day 19" do
       0,7,-8
     TEXT
 
-    sa0, *rest = sa.scanners
-    rest.each do |sa|
-      sa.reorient(sa0)
-      expect(sa.beacons).to eq sa0.beacons
-    end
+    #sa0, *rest = sa.scanners
+    #rest.each do |sa|
+    #  sa.reorient(sa0)
+    #  expect(sa.beacons).to eq sa0.beacons
+    #end
 
-    sa0, sa1 = input.scanners
-    sa1.reorient(sa0)
+    #s0, s1 = input.scanners
+    #s1.reorient(s0)
+    input.align
+    expect(input.scanners[1].pos).to eq [68,-1246,-43]
+    expect(input.scanners[4].pos).to eq [-20,-1133,1061]
   end
 
-  xit "should solve part 2" do
+  it "should solve part 2" do
+    input.align
+    expect(input.max_scanner_distance).to eq 3621
   end
 end
 
