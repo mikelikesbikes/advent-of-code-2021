@@ -43,18 +43,21 @@ end
 Scanner = Struct.new(:x, :y, :z, :beacons) do
   def initialize(x, y, z, beacons)
     super
-
-    @distances = {}
-    (0..(beacons.length - 2)).each do |i|
-      ((i + 1)..(beacons.length - 1)).each do |j|
-        distance = beacons[i].dist(beacons[j])
-        @distances[distance] = Set.new([beacons[i], beacons[j]])
-      end
-    end
+    calc_distances
   end
 
   def distances
     @distances
+  end
+
+  def calc_distances
+    @distances = {}
+    (0..(beacons.length - 2)).each do |i|
+      ((i + 1)..(beacons.length - 1)).each do |j|
+        distance_vec = beacons[i].diff(beacons[j])
+        @distances[distance_vec] = [beacons[i], beacons[j]]
+      end
+    end
   end
 
   def self.from(str)
@@ -64,17 +67,12 @@ Scanner = Struct.new(:x, :y, :z, :beacons) do
 
   def align(other, min_alignment = 12)
     overlapping = self.distances.keys & other.distances.keys
-    return nil unless overlapping.length >= min_alignment
+    d0 = overlapping.flat_map { |k| other.distances[k] }.uniq.sort_by(&:to_a)
+    d1 = overlapping.flat_map { |k| distances[k] }.uniq.sort_by(&:to_a)
+    return nil unless d0.length >= min_alignment
 
-    candidate_offsets = other.beacons.map do |b|
-      beacons[0].diff(b)
-    end
-
-    offset = candidate_offsets.find do |offset|
-      (beacons & other.offset_beacons(offset)).length >= min_alignment
-    end
-
-    other.move(*offset)
+    reorient(other)
+    other.move(*d1.first.diff(d0.first))
     self
   end
 
@@ -117,23 +115,26 @@ Scanner = Struct.new(:x, :y, :z, :beacons) do
   ].freeze
   def reorient(other)
     # find overlapping beacons (by distance)
-    require 'pry'; binding.pry
 
     # try orientations until overlapping beacons all have the same diff vector (not just absolute distance)
     txyz = other.beacons.first.to_a
     beacon = beacons.first
 
-    i = 0
-    transforms = TRANSFORMS.dup
-    other.beacons.zip(beacons).each do |b0, b1|
-      txyz = b0.to_a
-      beacon = b1.to_a
-      transforms = transforms.select do |t|
-        t.call(*beacon) == txyz
-      end
-    end
+    transform = TRANSFORMS.map do |t|
+      transformed_keys = distances.keys.map { |x,y,z| t.call(x, y, z) }
+      overlapping_keys = (transformed_keys & other.distances.keys)
+      [overlapping_keys.length, t]
+    end.max_by { |a, _| a }
 
-    beacons.each { |b| b.apply_transform(transforms.first) }
+    #other.distances.keys.zip(distances.keys).each do |b0, b1|
+    #  txyz = b0.to_a
+    #  transforms = transforms.select do |t|
+    #    t.call(b1.x, b1.y, b1.z) == txyz
+    #  end
+    #end
+
+    beacons.each { |b| b.apply_transform(transform.last) }
+    calc_distances
   end
 
   def offset_beacons(offset)
@@ -150,6 +151,7 @@ Scanner = Struct.new(:x, :y, :z, :beacons) do
     self.x = x
     self.y = y
     self.z = z
+
   end
 end
 
@@ -266,8 +268,8 @@ describe "day 19" do
       expect(sa.beacons).to eq sa0.beacons
     end
 
-    require 'pry'; binding.pry
-    input
+    sa0, sa1 = input.scanners
+    sa1.reorient(sa0)
   end
 
   xit "should solve part 2" do
