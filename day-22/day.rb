@@ -35,12 +35,13 @@ Box = Struct.new(:xrange, :yrange, :zrange) do
 
   def -(other)
     oxs = xrange & other.xrange
+    return [self] if oxs.size == 0
     oys = yrange & other.yrange
+    return [self] if oys.size == 0
     ozs = zrange & other.zrange
+    return [self] if ozs.size == 0
 
-    if oxs.size == 0 || oys.size == 0 || ozs.size == 0
-      [self]
-    elsif oxs == self.xrange && oys == self.yrange && ozs == self.zrange
+    if oxs == self.xrange && oys == self.yrange && ozs == self.zrange
       []
     else
       [
