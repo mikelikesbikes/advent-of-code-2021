@@ -93,14 +93,14 @@ Instruction = Struct.new(:toggle, :box) do
   end
 end
 
-class Range
+module RangeIntersection
   def &(other)
-    return (0...0) if self.end < other.begin || other.end < self.begin
     b = self.begin < other.begin ? other.begin : self.begin
     e = self.end > other.end ? other.end : self.end
     (b..e)
   end
 end
+Range.prepend(RangeIntersection)
 
 
 ### TESTS HERE ###
