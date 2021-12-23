@@ -134,16 +134,22 @@ describe "day 22" do
 
     input.boot
     expect(input.on_in(Reactor::BOOT_REGION)).to eq 590784
+
+    actual_input.boot
+    expect(actual_input.on_in(Reactor::BOOT_REGION)).to eq 551693
   end
 
   it "should solve part 2" do
     input2.boot
     expect(input2.on).to eq 2758514936282235
+
+    actual_input.boot
+    expect(actual_input.on).to eq 1165737675582132
   end
 
   describe Box do
     describe "-" do
-      it "for non overlapping boxes it returns both boxes" do
+      it "for non overlapping boxes it returns the first box" do
         b1 = Box(0..10, 0..10, 0..10)
         b2 = Box(20..30, 20..30, 20..30)
         expect(b1 - b2).to eq [b1]
