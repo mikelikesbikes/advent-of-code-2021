@@ -34,25 +34,20 @@ Box = Struct.new(:xrange, :yrange, :zrange) do
   end
 
   def -(other)
-    oxs = xrange & other.xrange
-    return [self] if oxs.size == 0
-    oys = yrange & other.yrange
-    return [self] if oys.size == 0
-    ozs = zrange & other.zrange
-    return [self] if ozs.size == 0
-
-    if oxs == self.xrange && oys == self.yrange && ozs == self.zrange
-      []
-    else
-      [
-        Box(xrange, yrange, zrange.begin..(ozs.begin - 1)),
-        Box(xrange, yrange, (ozs.end + 1)..zrange.end),
-        Box(xrange, yrange.begin..(oys.begin - 1), ozs),
-        Box(xrange, (oys.end + 1)..yrange.end, ozs),
-        Box(xrange.begin..(oxs.begin - 1), oys, ozs),
-        Box((oxs.end + 1)..xrange.end, oys, ozs)
-      ].select { |b| b.volume > 0 }
+    if (oxs = xrange & other.xrange).size == 0 ||
+       (oys = yrange & other.yrange).size == 0 ||
+       (ozs = zrange & other.zrange).size == 0
+      return [self]
     end
+
+    [
+      Box(xrange, yrange, zrange.begin..(ozs.begin - 1)),
+      Box(xrange, yrange, (ozs.end + 1)..zrange.end),
+      Box(xrange, yrange.begin..(oys.begin - 1), ozs),
+      Box(xrange, (oys.end + 1)..yrange.end, ozs),
+      Box(xrange.begin..(oxs.begin - 1), oys, ozs),
+      Box((oxs.end + 1)..xrange.end, oys, ozs)
+    ].select { |b| b.volume > 0 }
   end
 end
 
