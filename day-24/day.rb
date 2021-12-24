@@ -1,8 +1,5 @@
 def run
-  input = parse_input(read_input)
-
-  # code to run part 1 and part 2
-  puts find_largest_model_num(input)
+  puts Monad.digit_rules
 end
 
 def read_input(filename = "input.txt")
@@ -78,7 +75,7 @@ class ALU
 end
 
 Monad = ALU.from(read_input)
-def Monad.decompile
+def Monad.digit_rules
   rules = []
   stack = []
   instructions.each_slice(18).zip("A".."Z").each do |segment, id|
