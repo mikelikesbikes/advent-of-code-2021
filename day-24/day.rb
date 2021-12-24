@@ -6,7 +6,7 @@ def read_input(filename = "input.txt")
   if !STDIN.tty?
     ARGF.read
   else
-    filename = File.expand_path(ARGV[0] || filename, __dir__)
+    filename = File.expand_path(filename, __dir__)
     File.read(filename)
   end
 end
@@ -74,7 +74,7 @@ class ALU
   end
 end
 
-Monad = ALU.from(read_input)
+Monad = ALU.from(read_input("input.txt"))
 def Monad.digit_rules
   rules = []
   stack = []
