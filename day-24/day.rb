@@ -91,12 +91,18 @@ def Monad.digit_rules
   rules
 end
 
+def Monad.valid_number?(n)
+  input = n.digits.reverse
+  self.run(input)
+  registers[:z] == 0
+end
+
 ### TESTS HERE ###
 require "rspec"
 
 describe "day" do
-  let(:input) do
-    parse_input(File.read("test.txt"))
+  it "should solve part 1" do
+    expect(Monad.valid_number?(13579246899999)).to eq false
   end
 
   let(:actual_input) do
