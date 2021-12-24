@@ -1,5 +1,6 @@
 def run
-  puts Monad.digit_rules
+  #puts Monad.digit_rules
+  puts Monad.find_answers
 end
 
 def read_input(filename = "input.txt")
@@ -91,6 +92,24 @@ def Monad.digit_rules
   rules
 end
 
+def Monad.find_answers
+  stack = []
+  first, last = 11111111111111, 99999999999999
+  (0...14).each do |i|
+    a = instructions[18*i + 5].val
+    b = instructions[18*i + 15].val
+    if a > 0
+      stack << [i, b]
+      next
+    end
+
+    j, b = stack.pop
+    last -= ((a + b)*10**(13-(a > -b ? j : i))).abs
+    first += ((a + b)*10**(13-(a < -b ? j : i))).abs
+  end
+  [first, last]
+end
+
 def Monad.valid_number?(n)
   input = n.digits.reverse
   self.run(input)
@@ -103,14 +122,11 @@ require "rspec"
 describe "day" do
   it "should solve part 1" do
     expect(Monad.valid_number?(13579246899999)).to eq false
+    expect(Monad.find_answers.last).to eq 94992992796199
   end
 
-  let(:actual_input) do
-    parse_input(File.read("input.txt"))
-  end
-
-  it "should solve part 1" do
-    expect(valid_model_num?(actual_input, 13579246899999)).to eq false
+  it "should solve part 2" do
+    expect(Monad.find_answers.first).to eq 11931881141161
   end
 
   describe "ALU" do
@@ -159,9 +175,6 @@ describe "day" do
       expected = { w: 1, x: 0, y: 1, z: 0 }
       expect(alu.registers).to eq expected
     end
-  end
-
-  xit "should solve part 2" do
   end
 end
 
