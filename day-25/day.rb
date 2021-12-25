@@ -128,9 +128,9 @@ describe "day" do
 
     input.move_all
     expect(input.step).to eq 58
-  end
 
-  xit "should solve part 2" do
+    actual_input.move_all
+    expect(actual_input.step).to eq 560
   end
 end
 
